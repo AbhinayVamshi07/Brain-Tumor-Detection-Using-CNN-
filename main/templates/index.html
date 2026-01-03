@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Brain Tumor Detection</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nothing+You+Could+Do&display=swap" rel="stylesheet">
+
+<!-- MODEL VIEWER -->
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
+<style>
+
+body{
+    margin:0;
+    font-family:'Montserrat',sans-serif;
+    color:white;
+    height:100vh;
+    overflow-x:hidden;
+    background: radial-gradient(circle at 20% 20%, rgba(255,0,84,0.45), transparent),
+                radial-gradient(circle at 80% 20%, rgba(0,150,255,0.45), transparent),
+                radial-gradient(circle at 50% 100%, rgba(0,0,40,0.9), #000428);
+}
+
+/* ================= TIP BOX ================= */
+.tips-box{
+    position:absolute;
+    top:110px;
+    left:40px;
+    width:260px;
+    padding:18px;
+    background:rgba(255,255,255,0.10);
+    backdrop-filter:blur(14px);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.25);
+}
+
+.tip-title{
+    font-size:22px;
+    font-weight:900;
+}
+
+.tip-text{
+    margin-top:6px;
+    font-size:18px;
+    color:#d9f6ff;
+    transition:opacity 0.6s ease-in-out;
+}
+
+/* ================= 3D BRAIN ================= */
+.brain-box{
+    position:absolute;
+    top:110px;
+    right:70px;
+}
+
+model-viewer{
+    width:330px;
+    height:330px;
+}
+
+.brain-animate{
+    width: 330px;
+    animation: floatBrain 6s ease-in-out infinite,
+               rotateBrain 12s ease-in-out infinite;
+    filter: drop-shadow(0px 0px 12px rgba(255,255,255,0.2));
+}
+
+/* Floating Effect */
+@keyframes floatBrain {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-18px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Gentle Slow Tilt */
+@keyframes rotateBrain {
+  0%   { transform: rotateZ(0deg); }
+  50%  { transform: rotateZ(6deg); }
+  100% { transform: rotateZ(0deg); }
+}
+
+/* ================= MAIN PANEL ================= */
+.container{
+    margin:auto;
+    margin-top:140px;
+    width:60%;
+    text-align:center;
+    padding:45px;
+    background:rgba(255,255,255,0.12);
+    border-radius:25px;
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.25);
+}
+
+h1{
+    font-size:56px;
+    letter-spacing:4px;
+    margin-bottom:8px;
+    color: #000428;
+}
+/* h2{
+    font-size:25px;
+    letter-spacing:4px;
+    margin-bottom:8px;
+    color: #e4210ba5;
+} */
+
+.sub{
+    font-size:22px;
+    letter-spacing:6px;
+    margin-bottom:12px;
+}
+
+p{
+    font-size:22px;
+}
+
+input[type="file"]{
+    font-size:18px;
+}
+
+button{
+    padding:14px 50px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    background:#00ffd0;
+    color:#003b2d;
+    font-size:22px;
+    font-weight:900;
+}
+
+button:hover{
+    transform:scale(1.07);
+}
+
+.warning{
+    margin-top:6px;
+    font-size:16px;
+    color:#ffe2e2;
+}
+
+/* ================= RESULTS SECTION ================= */
+.result-section{
+    display:flex;
+    justify-content:center;
+    margin-top:40px;
+    gap:25px;
+}
+
+.card{
+    width:220px;
+    height:260px;
+    background:rgba(255,255,255,0.14);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.3);
+    padding:12px;
+    text-align:center;
+}
+
+.card img{
+    width:100%;
+    height:85%;
+    border-radius:12px;
+}
+
+.card h2{
+    font-size:18px;
+}
+
+/* ================= RESULT STATUS CARD ================= */
+.result-card{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    animation: fadeIn 1.2s ease-in-out, glowPulse 2s infinite alternate;
+}
+
+/* SAFE GREEN */
+.safe{
+    background: rgba(0,255,170,0.22);
+    box-shadow:0 0 28px rgba(0,255,170,0.45);
+}
+
+/* DANGER RED */
+.danger{
+    background: rgba(255,0,84,0.25);
+    box-shadow:0 0 28px rgba(255,40,40,0.55);
+}
+
+.result-text{
+    font-size:20px;
+    font-weight:900;
+    margin-top:8px;
+}
+
+@keyframes glowPulse{
+  from { box-shadow:0 0 10px rgba(255,255,255,0.2); }
+  to   { box-shadow:0 0 45px rgba(255,255,255,0.5); }
+}
+
+/* ================= FOOTER ================= */
+.footer{
+    position:fixed;
+    right:40px;
+    bottom:25px;
+    font-size:28px;
+    font-family: 'Nothing You Could Do', cursive;
+    color:white;
+    opacity:0.9;
+    text-shadow:0px 0px 12px rgba(255,255,255,0.35);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Tips -->
+<div class="tips-box">
+  <div class="tip-title">Brain Health Tip 🧠</div>
+  <div id="tip" class="tip-text">
+    Exercise — builds new neurons.
+  </div>
+</div>
+
+<!-- 3D Brain -->
+<div class="brain-box">
+<model-viewer 
+src="/static/models/Brain1.glb"
+class="brain-animate"
+auto-rotate
+interaction-prompt="none"
+disable-tap
+camera-controls
+rotation-per-second="25deg"
+exposure="1.2"
+shadow-intensity="1">
+</model-viewer>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+<h1>BRAIN TUMOR DETECTION</h1>
+<h2>Please Upload MRI Image of Brain Only</h2>
+<div class="sub">HEALTH • TECHNOLOGY • HOPE</div>
+
+<p>Glioma | Meningioma | Pituitary | No Tumor</p>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+<input type="file" name="image" required>
+<br><br>
+<button type="submit">Predict</button>
+</form>
+
+<p class="warning">
+⚠ Educational Project Only — Not a Medical Device.
+</p>
+
+{% if file_url %}
+<div class="result-section">
+
+<!-- Uploaded Image -->
+<div class="card">
+<h2>Uploaded MRI</h2>
+<img src="{{ file_url }}">
+</div>
+
+<!-- Heatmap -->
+<div class="card">
+<h2>Detection Focus</h2>
+<img src="{{ heatmap_url }}">
+</div>
+
+<!-- RESULT PANEL -->
+<div class="card result-card {{ box_class }}">
+    <h2>Result</h2>
+
+    {% if result %}
+    <div class="result-text">{{ message }}</div>
+
+    <p style="margin-top:10px; font-size:18px;">
+        <b>Confidence:</b> {{ prob }}%
+    </p>
+
+    <p style="font-size:18px;">
+        <b>Model Accuracy:</b> {{ model_acc }}%
+    </p>
+    {% endif %}
+</div>
+
+</div>
+{% endif %}
+</div>
+
+<!-- FOOTER SIGNATURE -->
+<div class="footer">
+Developed by Abhinay Vamshi Potnuri
+</div>
+
+<!-- TIPS SCRIPT -->
+<script>
+const tips = [
+"Walnuts — improve memory & protect neurons.",
+"Stay Hydrated — dehydration slows reaction time.",
+"Sleep Well — removes brain toxins.",
+"Exercise — stimulates neuron growth.",
+"Berries — improve brain communication.",
+"No Smoking — prevents brain shrinkage.",
+"Meditate — improves focus & calmness.",
+"Limit Screens — protects brain & sleep cycles."
+];
+
+let i=0;
+setInterval(()=>{
+ document.getElementById('tip').style.opacity=0;
+ setTimeout(()=>{
+    document.getElementById('tip').innerHTML=tips[i];
+    document.getElementById('tip').style.opacity=1;
+    i=(i+1)%tips.length;
+ },400);
+},2600);
+</script>
+
+</body>
+</html>
