@@ -5,7 +5,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'dev-key'
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['brain-tumor-detection-using-cnn-by.onrender.com', 'localhost', '127.0.0.1']
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
