@@ -7,49 +7,59 @@ from django.core.files.storage import FileSystemStorage
 import os
 import gdown
 
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "brain_tumor_model_multi.h5")
 
-DRIVE_MODEL_URL = "https://drive.google.com/uc?id=1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
-
 FILE_ID = "1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
+model = None
 
-def download_model():
-    print(">>> Downloading model correctly...")
-    import gdown
-    
+
+# -----------------  SAFE MODEL LOADER  -----------------
+def load_model_safe():
+    global model
+    if model is not None:
+        return model
+
     url = f"https://drive.google.com/uc?id={FILE_ID}"
-    gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
 
-    # verify file
-    if os.path.getsize(MODEL_PATH) < 5000000:   # less than 5MB = broken
-        print("DOWNLOAD FAILED. Retrying...")
-        os.remove(MODEL_PATH)
-        download_model()
+    # download if not there
+    if not os.path.exists(MODEL_PATH):
+        print(">>> Downloading model...")
+        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
 
-if not os.path.exists(MODEL_PATH):
-    download_model()
+    # verify size (Railway sometimes corrupts file)
+    if os.path.getsize(MODEL_PATH) < 5000000:
+        print(">>> CORRUPTED MODEL - Re-downloading...")
+        if os.path.exists(MODEL_PATH):
+            os.remove(MODEL_PATH)
+        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
 
+    print(">>> Loading TensorFlow model...")
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+    # warmup build
+    model(tf.zeros((1,224,224,3)))
+    print(">>> Model Ready")
 
-# 🔥 IMPORTANT — build model
-model(tf.zeros((1,224,224,3)))
+    return model
+
 
 class_names = ['glioma','meningioma','notumor','pituitary']
 
 
-# -------- SAFE GRADCAM ----------
-def get_gradcam(img_array):
+
+# -----------------  GRAD-CAM  -----------------
+def get_gradcam(img_array, mdl):
     last_conv = None
-    for layer in model.layers[::-1]:
+    for layer in mdl.layers[::-1]:
         if isinstance(layer, tf.keras.layers.Conv2D):
             last_conv = layer
             break
 
     grad_model = tf.keras.models.Model(
-        inputs=model.input,
-        outputs=[last_conv.output, model.output]
+        inputs=mdl.input,
+        outputs=[last_conv.output, mdl.output]
     )
 
     with tf.GradientTape() as tape:
@@ -73,6 +83,8 @@ def get_gradcam(img_array):
     return cam
 
 
+
+# -----------------  MAIN VIEW  -----------------
 def predict(request):
     result = ""
     file_url = ""
@@ -83,6 +95,8 @@ def predict(request):
     model_acc = 95.6
 
     if request.method == "POST" and request.FILES.get("image"):
+        mdl = load_model_safe()
+
         img = request.FILES["image"]
         fs = FileSystemStorage()
         filename = fs.save(img.name, img)
@@ -93,7 +107,7 @@ def predict(request):
         x = image.img_to_array(img_data) / 255.0
         x = np.expand_dims(x, axis=0)
 
-        prediction = model.predict(x)
+        prediction = mdl.predict(x)
         class_index = np.argmax(prediction)
         result = class_names[class_index]
 
@@ -107,7 +121,7 @@ def predict(request):
             message = f"Tumor Detected — {result.capitalize()}"
             box_class = "danger"
 
-        heatmap = get_gradcam(x)
+        heatmap = get_gradcam(x, mdl)
 
         img_cv = cv2.imread(file_path)
         img_cv = cv2.resize(img_cv, (224,224))
