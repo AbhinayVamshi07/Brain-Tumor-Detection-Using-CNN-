@@ -5,32 +5,32 @@ import cv2
 from tensorflow.keras.preprocessing import image
 from django.core.files.storage import FileSystemStorage
 import os
-
 import gdown
 
 
-# MODEL DOWNLOAD CONFIG
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "brain_tumor_model_multi.h5")
 
 DRIVE_MODEL_URL = "https://drive.google.com/uc?id=1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
 
-# Download model if not already there
+
 if not os.path.exists(MODEL_PATH):
     print(">>> Downloading model from Drive...")
     gdown.download(DRIVE_MODEL_URL, MODEL_PATH, quiet=False)
 
-# Load model
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
-# Warmup
-model(tf.zeros((1,224,224,3)))
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+model(tf.zeros((1,224,224,3)))   # warmup
 
 class_names = ['glioma','meningioma','notumor','pituitary']
 
 
 # -------- GRAD CAM --------
 def get_gradcam(img_array):
+
+    # Ensure model has been built
+    _ = model(img_array)
+
     conv_layer = None
     for layer in reversed(model.layers):
         if isinstance(layer, tf.keras.layers.Conv2D):
@@ -38,7 +38,8 @@ def get_gradcam(img_array):
             break
 
     grad_model = tf.keras.models.Model(
-        [model.inputs], [conv_layer.output, model.output]
+        inputs=model.input,
+        outputs=[conv_layer.output, model.output]
     )
 
     with tf.GradientTape() as tape:
@@ -49,12 +50,13 @@ def get_gradcam(img_array):
     grads = tape.gradient(loss, conv_outputs)[0]
     conv_outputs = conv_outputs[0]
     weights = tf.reduce_mean(grads, axis=(0,1))
+
     cam = tf.zeros(conv_outputs.shape[0:2])
 
-    for i,w in enumerate(weights):
-        cam += w * conv_outputs[:,:,i]
+    for i, w in enumerate(weights):
+        cam += w * conv_outputs[:, :, i]
 
-    cam = tf.maximum(cam,0)
+    cam = tf.maximum(cam, 0)
     cam = cam / tf.reduce_max(cam)
     heatmap = cv2.resize(cam.numpy(), (224,224))
 
@@ -69,7 +71,7 @@ def predict(request):
     message = ""
     box_class = ""
     prob = ""
-    model_acc = 95.6   # set your trained accuracy
+    model_acc = 95.6
 
     if request.method == "POST" and request.FILES.get("image"):
         img = request.FILES["image"]
@@ -90,25 +92,27 @@ def predict(request):
         prob = round(confidence, 2)
 
         if result.lower() == "notumor":
-            message = "No Tumor Detected. Stay healthy and keep taking care of yourself!"
+            message = "No Tumor Detected. Stay healthy!"
             box_class = "safe"
         else:
-            message = f"Tumor Detected — {result.capitalize()} ⚠ Please consult a medical professional."
+            message = f"Tumor Detected — {result.capitalize()} ⚠"
             box_class = "danger"
 
-        # heatmap
         heatmap = get_gradcam(x)
+
         img_cv = cv2.imread(file_path)
         img_cv = cv2.resize(img_cv, (224,224))
-        heatmap = np.uint8(255*heatmap)
+
+        heatmap = np.uint8(255 * heatmap)
         heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+
         final = heatmap * 0.5 + img_cv
 
         heatmap_path = fs.path("heatmap_" + filename)
         cv2.imwrite(heatmap_path, final)
         heatmap_url = fs.url("heatmap_" + filename)
 
-    return render(request, "index.html",{
+    return render(request, "index.html", {
         "result": result,
         "message": message,
         "prob": prob,
