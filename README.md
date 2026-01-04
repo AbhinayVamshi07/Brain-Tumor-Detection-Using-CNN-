@@ -1,4 +1,4 @@
-# 🧠 Brain Tumor Detection – Neural Vision in The Matrix
+# 🧠 Brain Tumor Detection – Using CNN
 
 > “There is no spoon… only tensors.”  
 > — Morpheus (…probably 😎)
