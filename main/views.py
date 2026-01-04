@@ -4,14 +4,27 @@ import numpy as np
 import cv2
 from tensorflow.keras.preprocessing import image
 from django.core.files.storage import FileSystemStorage
-
 import os
 
+import gdown
+
+
+# MODEL DOWNLOAD CONFIG
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "brain_tumor_model_multi.h5")
 
+DRIVE_MODEL_URL = "https://drive.google.com/uc?id=1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
+
+# Download model if not already there
+if not os.path.exists(MODEL_PATH):
+    print(">>> Downloading model from Drive...")
+    gdown.download(DRIVE_MODEL_URL, MODEL_PATH, quiet=False)
+
+# Load model
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-model(tf.zeros((1,224,224,3)))   # keep this warmup line
+
+# Warmup
+model(tf.zeros((1,224,224,3)))
 
 class_names = ['glioma','meningioma','notumor','pituitary']
 
