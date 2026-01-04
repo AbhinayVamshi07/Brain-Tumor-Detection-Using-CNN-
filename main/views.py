@@ -51,15 +51,17 @@ class_names = ['glioma','meningioma','notumor','pituitary']
 
 # -----------------  GRAD-CAM  -----------------
 def get_gradcam(img_array, mdl):
+    # Find last conv layer
     last_conv = None
     for layer in mdl.layers[::-1]:
         if isinstance(layer, tf.keras.layers.Conv2D):
             last_conv = layer
             break
 
+    # --- IMPORTANT FIX FOR SEQUENTIAL MODEL ---
     grad_model = tf.keras.models.Model(
-        inputs=mdl.input,
-        outputs=[last_conv.output, mdl.output]
+        inputs=mdl.layers[0].input,
+        outputs=[last_conv.output, mdl.layers[-1].output]
     )
 
     with tf.GradientTape() as tape:
