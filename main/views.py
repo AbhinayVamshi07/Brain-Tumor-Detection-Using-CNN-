@@ -51,38 +51,40 @@ class_names = ['glioma','meningioma','notumor','pituitary']
 
 # -----------------  GRAD-CAM  -----------------
 def get_gradcam(img_array, mdl):
-    # Find last conv layer
-    last_conv = None
-    for layer in mdl.layers[::-1]:
-        if isinstance(layer, tf.keras.layers.Conv2D):
-            last_conv = layer
-            break
+    try:
+        target_layer = mdl.get_layer("conv2d_2")   # ← your real last conv
+    except:
+        # fallback in case TF renames it
+        for layer in mdl.layers[::-1]:
+            if isinstance(layer, tf.keras.layers.Conv2D):
+                target_layer = layer
+                break
 
-    # --- IMPORTANT FIX FOR SEQUENTIAL MODEL ---
     grad_model = tf.keras.models.Model(
-        inputs=mdl.layers[0].input,
-        outputs=[last_conv.output, mdl.layers[-1].output]
+        inputs=mdl.input,
+        outputs=[target_layer.output, mdl.output]
     )
 
     with tf.GradientTape() as tape:
-        conv_out, preds = grad_model(img_array)
-        class_idx = tf.argmax(preds[0])
-        loss = preds[:, class_idx]
+        conv_out, predictions = grad_model(img_array)
+        class_index = tf.argmax(predictions[0])
+        loss = predictions[:, class_index]
 
     grads = tape.gradient(loss, conv_out)[0]
     conv_out = conv_out[0]
 
-    weights = tf.reduce_mean(grads, axis=(0,1))
+    weights = tf.reduce_mean(grads, axis=(0, 1))
     cam = np.zeros(conv_out.shape[0:2], dtype=np.float32)
 
     for i, w in enumerate(weights):
-        cam += w * conv_out[:,:,i]
+        cam += w * conv_out[:, :, i]
 
     cam = np.maximum(cam, 0)
-    cam = cam / cam.max()
-    cam = cv2.resize(cam, (224,224))
+    cam = cam / (cam.max() + 1e-10)
+    cam = cv2.resize(cam, (224, 224))
 
     return cam
+
 
 
 
@@ -123,7 +125,7 @@ def predict(request):
             message = f"Tumor Detected — {result.capitalize()}"
             box_class = "danger"
 
-        heatmap = get_gradcam(x, mdl)
+        heatmap = get_gradcam(x, model)
 
         img_cv = cv2.imread(file_path)
         img_cv = cv2.resize(img_cv, (224,224))
