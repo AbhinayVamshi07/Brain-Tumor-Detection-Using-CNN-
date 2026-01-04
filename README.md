@@ -30,15 +30,28 @@ Built using **Convolutional Neural Networks (CNN)** and wrapped inside a **Djang
 ### ✅ No Tumor Found
 ![No Tumor](assets/No%20tumor.png)
 
+
+
 ---
 
-## ☕ What This AI Really Does
+## 🎥 Live Demo
 
-✔ Upload Brain MRI Images  
-✔ Processes them using CNN Model  
-✔ Predicts Tumor Type  
-✔ Displays Confidence Score  
-✔ Clean and Simple UI for Doctors / Users  
+See the AI in action — Matrix style 🟢  
+Watch how MRI scans are analyzed and predictions are generated.
+
+![Demo](assets/Demo.gif)
+
+---
+
+---
+
+## What This AI Really Does
+
+Upload Brain MRI Images  
+Processes them using CNN Model  
+Predicts Tumor Type  
+Displays Confidence Score and model accuracy
+Clean and Simple UI for Doctors / Users  
 
 *(Grad-CAM heatmap visualization — planned upgrade)*
 
@@ -68,10 +81,10 @@ It represents:
 
 Great for:
 
-✔ Portfolio  
-✔ Internships  
-✔ Placements  
-✔ ML Learning Journey  
+Portfolio  
+Internships  
+Placements  
+ML Learning Journey  
 
 ---
 
