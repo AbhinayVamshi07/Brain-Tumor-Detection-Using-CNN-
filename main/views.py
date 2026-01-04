@@ -5,8 +5,14 @@ import cv2
 from tensorflow.keras.preprocessing import image
 from django.core.files.storage import FileSystemStorage
 
-model = tf.keras.models.load_model("brain_tumor_model_multi.h5", compile=False)
-model(tf.zeros((1,224,224,3)))  # warmup
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "brain_tumor_model_multi.h5")
+
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+model(tf.zeros((1,224,224,3)))   # keep this warmup line
+
 class_names = ['glioma','meningioma','notumor','pituitary']
 
 
