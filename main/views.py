@@ -7,61 +7,55 @@ from django.core.files.storage import FileSystemStorage
 import os
 import gdown
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "brain_tumor_model_multi.h5")
 
 DRIVE_MODEL_URL = "https://drive.google.com/uc?id=1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
 
 if not os.path.exists(MODEL_PATH):
-    print(">>> Downloading model from Drive...")
+    print("Downloading model...")
     gdown.download(DRIVE_MODEL_URL, MODEL_PATH, quiet=False)
 
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
-# force build graph
-model.build((None,224,224,3))
-model.predict(np.zeros((1,224,224,3)))
+# 🔥 IMPORTANT — build model
+model(tf.zeros((1,224,224,3)))
 
 class_names = ['glioma','meningioma','notumor','pituitary']
 
 
+# -------- SAFE GRADCAM ----------
 def get_gradcam(img_array):
-
-    model.predict(img_array)
-
-    conv_layer = None
-    for layer in reversed(model.layers):
+    last_conv = None
+    for layer in model.layers[::-1]:
         if isinstance(layer, tf.keras.layers.Conv2D):
-            conv_layer = layer
+            last_conv = layer
             break
 
     grad_model = tf.keras.models.Model(
-        inputs=model.layers[0].input,
-        outputs=[conv_layer.output, model.output]
+        inputs=model.input,
+        outputs=[last_conv.output, model.output]
     )
 
     with tf.GradientTape() as tape:
-        conv_outputs, preds = grad_model(img_array)
+        conv_out, preds = grad_model(img_array)
         class_idx = tf.argmax(preds[0])
         loss = preds[:, class_idx]
 
-    grads = tape.gradient(loss, conv_outputs)[0]
-    conv_outputs = conv_outputs[0]
+    grads = tape.gradient(loss, conv_out)[0]
+    conv_out = conv_out[0]
 
     weights = tf.reduce_mean(grads, axis=(0,1))
+    cam = np.zeros(conv_out.shape[0:2], dtype=np.float32)
 
-    cam = tf.zeros(conv_outputs.shape[0:2])
+    for i, w in enumerate(weights):
+        cam += w * conv_out[:,:,i]
 
-    for i,w in enumerate(weights):
-        cam += w * conv_outputs[:,:,i]
+    cam = np.maximum(cam, 0)
+    cam = cam / cam.max()
+    cam = cv2.resize(cam, (224,224))
 
-    cam = tf.maximum(cam,0)
-    cam = cam / tf.reduce_max(cam)
-    heatmap = cv2.resize(cam.numpy(), (224,224))
-
-    return heatmap
-
+    return cam
 
 
 def predict(request):
@@ -102,8 +96,7 @@ def predict(request):
 
         img_cv = cv2.imread(file_path)
         img_cv = cv2.resize(img_cv, (224,224))
-
-        heatmap = np.uint8(255*heatmap)
+        heatmap = np.uint8(255 * heatmap)
         heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
         final = heatmap * 0.5 + img_cv
 
@@ -111,8 +104,7 @@ def predict(request):
         cv2.imwrite(heatmap_path, final)
         heatmap_url = fs.url("heatmap_" + filename)
 
-
-    return render(request, "index.html",{
+    return render(request,"index.html",{
         "result": result,
         "message": message,
         "prob": prob,
