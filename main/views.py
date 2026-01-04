@@ -12,9 +12,24 @@ MODEL_PATH = os.path.join(BASE_DIR, "brain_tumor_model_multi.h5")
 
 DRIVE_MODEL_URL = "https://drive.google.com/uc?id=1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
 
+FILE_ID = "1MBqyS3opfYxVslAoNJM5rlHShOYOF2hU"
+
+def download_model():
+    print(">>> Downloading model correctly...")
+    import gdown
+    
+    url = f"https://drive.google.com/uc?id={FILE_ID}"
+    gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
+
+    # verify file
+    if os.path.getsize(MODEL_PATH) < 5000000:   # less than 5MB = broken
+        print("DOWNLOAD FAILED. Retrying...")
+        os.remove(MODEL_PATH)
+        download_model()
+
 if not os.path.exists(MODEL_PATH):
-    print("Downloading model...")
-    gdown.download(DRIVE_MODEL_URL, MODEL_PATH, quiet=False)
+    download_model()
+
 
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 
