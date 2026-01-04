@@ -67,6 +67,7 @@ It represents:
 - Handling real datasets and model loading
 
 Great for:
+
 ✔ Portfolio  
 ✔ Internships  
 ✔ Placements  
@@ -79,7 +80,6 @@ Great for:
 Clone the repo:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
+https://github.com/AbhinayVamshi07/Brain-Tumor-Detection-Using-CNN-.git
 
 
