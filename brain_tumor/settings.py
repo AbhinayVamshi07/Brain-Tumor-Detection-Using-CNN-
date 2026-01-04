@@ -6,7 +6,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'dev-key'
 DEBUG = True
 ALLOWED_HOSTS = ["*", ".railway.app"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+CSRF_TRUSTED_ORIGINS = [
+    "https://web-production-5192c.up.railway.app",
+    "https://*.up.railway.app",
+]
+
+
 
 
 INSTALLED_APPS = [
@@ -57,6 +62,10 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static"
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 
