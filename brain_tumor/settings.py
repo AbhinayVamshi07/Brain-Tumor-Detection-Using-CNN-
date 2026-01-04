@@ -5,7 +5,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'dev-key'
 DEBUG = True
-ALLOWED_HOSTS = ["web-production-c2eb4.up.railway.app", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["*",]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
