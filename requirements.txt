@@ -1,7 +1,7 @@
 Django==5.0
 gunicorn
 whitenoise
-tensorflow==2.12.0
-numpy==1.23.5
-opencv-python-headless==4.8.0.74
+tensorflow==2.20.0
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
 Pillow
