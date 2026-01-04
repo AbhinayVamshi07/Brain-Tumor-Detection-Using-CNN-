@@ -34,12 +34,12 @@ Built using **Convolutional Neural Networks (CNN)** and wrapped inside a **Djang
 
 ---
 
-## 🎥 Live Demo
+## 🎥 Watch the Demo using the Google Drive link given below:
 
 See the AI in action — Matrix style 🟢  
 Watch how MRI scans are analyzed and predictions are generated.
 
-![Demo](assets/Demo.gif)
+https://drive.google.com/file/d/13sHKgs3CvB5ryCsehpx1LCLqmyTkttYE/view?usp=sharing
 
 ---
 
