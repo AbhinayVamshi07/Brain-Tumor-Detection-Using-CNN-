@@ -91,8 +91,12 @@ ML Learning Journey
 ## ⚙️ Run Locally — Escape The Matrix ☠️😅
 
 You can download the model from google drive directly using the link below: 
+
 https://drive.google.com/drive/folders/11PreLW-ACrNNp2XVYABEzFNTFaKU5aRo?usp=drive_link
-Download the Dataset if required: https://drive.google.com/drive/folders/1JjJScaX9JMkYbYhEhJR0Plq-EeRngZNb?usp=drive_link
+
+Download the Dataset if required: 
+
+https://drive.google.com/drive/folders/1JjJScaX9JMkYbYhEhJR0Plq-EeRngZNb?usp=drive_link
 
 Clone the repo:
 
